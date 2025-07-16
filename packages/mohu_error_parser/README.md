@@ -79,6 +79,8 @@ The parsed file `Parsed_Output.xlsx` will appear in your `output` folder.
 
 ## 👨‍💻 How to Use (For Developers)
 
+[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-ivasteel%2Fmohu--error--parser-blue)](https://hub.docker.com/r/ivasteel/mohu-error-parser)
+
 These instructions are for developers who have cloned the repository and want to build the image and run tests locally. All commands should be run from the **root directory of the `IOC` repository**.
 
 #### Step 1: Clone the Repository
