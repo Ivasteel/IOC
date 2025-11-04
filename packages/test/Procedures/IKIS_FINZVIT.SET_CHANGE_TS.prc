@@ -1,0 +1,14 @@
+/* Formatted on 8/12/2025 6:06:35 PM (QP5 v5.417) */
+CREATE OR REPLACE PROCEDURE IKIS_FINZVIT.SET_CHANGE_TS (
+    p_CHANGE_TS   IN OUT NUMBER)
+IS
+    l_curval   NUMBER;
+BEGIN
+    IF FINZVIT_COMMON.Is_OBI_Enabled
+    THEN
+        SELECT SQ_OBI_TS.NEXTVAL INTO l_curval FROM DUAL;
+
+        p_CHANGE_TS := l_curval;
+    END IF;
+END SET_CHANGE_TS;
+/
