@@ -1,0 +1,5 @@
+/* Formatted on 8/12/2025 6:10:44 PM (QP5 v5.417) */
+CREATE OR REPLACE PACKAGE IKIS_RBM.IKIS_NSI_CONST
+IS
+END ikis_nsi_const;
+/
