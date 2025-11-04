@@ -1,0 +1,12 @@
+/* Formatted on 8/12/2025 6:07:20 PM (QP5 v5.417) */
+CREATE OR REPLACE TRIGGER IKIS_PERSON.IBR_ID_PERSON_CHANGE
+    BEFORE INSERT
+    ON IKIS_PERSON.PERSON_CHANGE
+    FOR EACH ROW
+BEGIN
+    IF (:NEW.pc_id = 0) OR (:NEW.pc_id IS NULL)
+    THEN
+        :NEW.pc_id := ID_PERSON_CHANGE (p_id => :NEW.pc_id);
+    END IF;
+END;
+/

@@ -1,0 +1,12 @@
+/* Formatted on 8/12/2025 6:07:20 PM (QP5 v5.417) */
+CREATE OR REPLACE TRIGGER IKIS_PERSON.IBR_ID_NSI_FNAME
+    BEFORE INSERT
+    ON IKIS_PERSON.NSI_FNAME
+    FOR EACH ROW
+BEGIN
+    IF (:NEW.fn_id = 0) OR (:NEW.fn_id IS NULL)
+    THEN
+        :NEW.fn_id := ID_NSI_FNAME (:NEW.fn_id);
+    END IF;
+END;
+/

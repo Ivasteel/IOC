@@ -1,0 +1,12 @@
+/* Formatted on 8/12/2025 6:07:20 PM (QP5 v5.417) */
+CREATE OR REPLACE TRIGGER IKIS_PERSON.IBR_ID_CONTACT_DATA
+    BEFORE INSERT
+    ON IKIS_PERSON.CONTACT_DATA
+    FOR EACH ROW
+BEGIN
+    IF (:NEW.cd_id = 0) OR (:NEW.cd_id IS NULL)
+    THEN
+        :NEW.cd_id := ID_CONTACT_DATA (p_id => :NEW.cd_id);
+    END IF;
+END;
+/
