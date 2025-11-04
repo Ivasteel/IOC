@@ -1,0 +1,12 @@
+/* Formatted on 8/12/2025 6:10:55 PM (QP5 v5.417) */
+CREATE OR REPLACE TRIGGER IKIS_RBM.IBR_ID_IC_REQUESTS_LOG
+    BEFORE INSERT
+    ON IKIS_RBM.IC_REQUESTS_LOG
+    FOR EACH ROW
+BEGIN
+    IF (:NEW.irl_id = 0) OR (:NEW.irl_id IS NULL)
+    THEN
+        :NEW.irl_id := ID_IC_REQUESTS_LOG (:NEW.irl_id);
+    END IF;
+END;
+/
