@@ -1,0 +1,12 @@
+/* Formatted on 8/12/2025 6:12:49 PM (QP5 v5.417) */
+CREATE OR REPLACE TRIGGER IKIS_WEBPROXY.IBR_ID_ITAZ_TREE
+    BEFORE INSERT
+    ON IKIS_WEBPROXY.ITAZ_TREE
+    FOR EACH ROW
+BEGIN
+    IF (:NEW.tr_id = 0) OR (:NEW.tr_id IS NULL)
+    THEN
+        :NEW.tr_id := ID_ITAZ_TREE (:NEW.tr_id);
+    END IF;
+END;
+/

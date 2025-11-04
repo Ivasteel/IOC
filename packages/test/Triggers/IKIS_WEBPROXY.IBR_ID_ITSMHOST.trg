@@ -1,0 +1,12 @@
+/* Formatted on 8/12/2025 6:12:50 PM (QP5 v5.417) */
+CREATE OR REPLACE TRIGGER IKIS_WEBPROXY.IBR_ID_ITSMHOST
+    BEFORE INSERT
+    ON IKIS_WEBPROXY.ITSMHOST
+    FOR EACH ROW
+BEGIN
+    IF (:NEW.hst_id = 0) OR (:NEW.hst_id IS NULL)
+    THEN
+        :NEW.hst_id := ID_ITSMHOST (:NEW.hst_id);
+    END IF;
+END;
+/
