@@ -1,0 +1,14 @@
+/* Formatted on 8/12/2025 6:10:10 PM (QP5 v5.417) */
+CREATE OR REPLACE TRIGGER IKIS_SYS.TID$BLD$UPGRADE
+    BEFORE INSERT
+    ON IKIS_SYS.BLD$UPGRADE
+    FOR EACH ROW
+DECLARE
+    l_id   NUMBER;
+BEGIN
+    SELECT SQ$BLD$UPGRADE.NEXTVAL INTO l_id FROM DUAL;
+
+    :NEW.bldu_id := l_id;
+    :NEW.bldu_order := l_id;
+END;
+/
