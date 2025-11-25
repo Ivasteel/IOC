@@ -16,10 +16,9 @@ LOG_DIR = "log"
 INPUT_FILE = f"{INPUT_DIR}/Book.xlsx"
 OUTPUT_FILE = f"{OUTPUT_DIR}/Parsed_Output.xlsx"
 LOG_FILE = f"{LOG_DIR}/deported_children_parser_log.txt"
-SHEET_NAME = "Sheet1"
 
-# Define input column names
-FULL_NAME_COLUMN = 'ПІБ'
+NAME_ORIGINAL_COLUMN = 'ПІБ дитини (оригінал)'
+NAME_TRANS_COLUMN = 'ПІБ дитини (транслітерація, у разі наявності інформації російською мовою)'
 DOB_COLUMN = 'Дата народження'
 
 # Define output column names
@@ -260,34 +259,79 @@ def process_row_combinations(row: pd.Series, source_row_num: int) -> List[Dict[s
         List[Dict[str, Any]]: A list of one or more dictionaries, where each
                                dictionary is a fully structured output record.
     """
-    full_name_raw = str(row.get(FULL_NAME_COLUMN, '')).strip()
     dob_raw = row.get(DOB_COLUMN)
-    if not full_name_raw:
-        logging.warning(f"Skipping row {source_row_num} due to empty '{FULL_NAME_COLUMN}'.")
+
+    names_to_process = []
+
+    # Helper function for strict data filtering (removes 'nan', None, empty strings)
+    def get_valid_name(val: Any) -> Optional[str]:
+        if pd.isna(val):
+            return None
+        s = str(val).strip()
+        # If string is empty or became "nan" due to string conversion
+        if not s or s.lower() == 'nan':
+            return None
+        return s
+
+    # 1. Check the Original Name column
+    val_orig = get_valid_name(row.get(NAME_ORIGINAL_COLUMN))
+    if val_orig:
+        names_to_process.append(val_orig)
+
+    # 2. Check the Transliteration column
+    val_trans = get_valid_name(row.get(NAME_TRANS_COLUMN))
+    if val_trans:
+        # Add only if this name is not already in the list
+        if val_trans not in names_to_process:
+            names_to_process.append(val_trans)
+
+    if not names_to_process:
+        logging.warning(f"Skipping row {source_row_num} due to empty name columns.")
         return []
 
-    quality_flags: List[str] = []
-
-    date_pattern = r'\b(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})\b'
-    date_match = re.search(date_pattern, full_name_raw)
-
-    if date_match and (pd.isna(dob_raw) or str(dob_raw).strip() == ''):
-        dob_raw = date_match.group(1)
-        full_name_raw = full_name_raw[:date_match.start()].strip()
-        quality_flags.append("DOB_EXTRACTED_FROM_NAME")
-
-    source_data = f"{str(row.get(FULL_NAME_COLUMN, '')).strip()} | {str(row.get(DOB_COLUMN, '')).strip()}"
-    name_variations = generate_name_variations(full_name_raw, quality_flags)
-    dob_variations = generate_dob_variations(dob_raw, quality_flags)
-
     all_records = []
-    for name_combo in name_variations:
-        for dob_combo in dob_variations:
-            clean_name_combo = re.sub(r'\s+', ' ', name_combo).strip()
-            if clean_name_combo:
-                final_record = structure_final_record(clean_name_combo, dob_combo, source_row_num, source_data, quality_flags)
-                all_records.append(final_record)
-                logging.info(f"Generated record for row {source_row_num}: {final_record}")
+
+    # Now iterate through each found name separately
+    for current_full_name_raw in names_to_process:
+
+        current_dob_raw = dob_raw
+        current_name_processing = current_full_name_raw
+        quality_flags: List[str] = []
+
+        # Logic to extract date from the name field if DOB column is empty
+        date_pattern = r'\b(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})\b'
+        date_match = re.search(date_pattern, current_name_processing)
+
+        if date_match and (pd.isna(current_dob_raw) or str(current_dob_raw).strip() == ''):
+            current_dob_raw = date_match.group(1)
+            current_name_processing = current_name_processing[:date_match.start()].strip()
+            quality_flags.append("DOB_EXTRACTED_FROM_NAME")
+
+        # Construct source_data string (handle 'nan' in DOB for display)
+        dob_str_for_source = str(row.get(DOB_COLUMN, '')).strip()
+        if dob_str_for_source.lower() == 'nan': dob_str_for_source = ''
+
+        source_data = f"{current_full_name_raw} | {dob_str_for_source}"
+
+        # Generate variations
+        name_variations = generate_name_variations(current_name_processing, quality_flags)
+        dob_variations = generate_dob_variations(current_dob_raw, quality_flags)
+
+        # Create final records
+        for name_combo in name_variations:
+            for dob_combo in dob_variations:
+                clean_name_combo = re.sub(r'\s+', ' ', name_combo).strip()
+                if clean_name_combo:
+                    final_record = structure_final_record(
+                        clean_name_combo,
+                        dob_combo,
+                        source_row_num,
+                        source_data,
+                        quality_flags
+                    )
+                    all_records.append(final_record)
+                    logging.info(f"Generated record for row {source_row_num}: {final_record[STATUS_COLUMN]} - {clean_name_combo}")
+
     return all_records
 
 # ==============================================================================
@@ -316,7 +360,7 @@ def main() -> None:
     logging.info("Script started: deported_children_parser")
 
     try:
-        input_data = pd.read_excel(INPUT_FILE, sheet_name=SHEET_NAME, engine="openpyxl", header=0)
+        input_data = pd.read_excel(INPUT_FILE, sheet_name=0, engine="openpyxl", header=0)
     except Exception as e:
         logging.error(f"Failed to read Excel file '{INPUT_FILE}'. Error: {e}")
         return
